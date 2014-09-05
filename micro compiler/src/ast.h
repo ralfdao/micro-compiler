@@ -19,15 +19,16 @@ public:
 	string opcode, op1, op2, op3;	
 	vector<string> gen_vec; //data flow analysis generation set
 	vector<string> kill_vec; //data flow analysis kill set	
-	vector<string> live_in_vec; //alive symbols before current IR node
-	vector<string> live_out_vec; //alive symbols after current IR node	
+	vector<string> live_in_vec; //alive symbols entering current IR node
+	vector<string> live_out_vec; //alive symbols leaving current IR node	
 };
 
 class IRnodeInList
 {
 public:
 	bool isleader(); //decide if this IR_node is the leading one in current code block
-	IR_node node;
+	
+	IR_node node; // actual data member
 	vector<IRnodeInList*> preVec; //the preceding IR_nodes
 	vector<IRnodeInList*> sucVec; //the successive IR_nodes   
 };
@@ -65,7 +66,7 @@ public:
 	string type;
 	IR_node ir;
 	vector<IRnodeInList*> *IRnodeList;
-	IRnodeInList* pbase;
+	IRnodeInList* pbase; // IR: "STOREI"/"STOREF"
 	Symtable* pglobal;
 	Symtable* pfunc;
 };
@@ -103,7 +104,7 @@ public:
 	string name;
 	Symtable* funsym;
 	list<string> tmplist;
-	IRnodeInList *p0, *p1, *finalpop; //p0 -> first "PUSH", p1 -> "JSR"
+	IRnodeInList *pPush, *pJsr, *pPop; // IR: "PUSH", "JSR", "POP"
 	list<IRnodeInList*> pushList;
 	list<IRnodeInList*> popList;	
 };
@@ -118,7 +119,7 @@ public:
 	virtual ~cond_node();
 		
     exp_node *left, *right;
-	IRnodeInList* pcond;
+	IRnodeInList* pcond; //IR : "NE"/"EQ"/"GE"/"LE"/"GT"/"LT"
 	string opcode, tmp; // tmp used only when comparing two identifiers 
 };
 
@@ -134,7 +135,7 @@ public:
 	
 	string opCode;
 	exp_node *left, *right;
-	IRnodeInList *pOperator;
+	IRnodeInList *pOperator; // IR: "ADDI"/"ADDF"/"SUBI"/"SUBF"/"MULTI"/"MULTF"/"DIVI"/"DIVF"
 };
 
 class statement //general statement class, serving as the base class of other statement class
@@ -162,7 +163,7 @@ public:
 	virtual ~return_stmt();
 	
 	exp_node *ret_exp;
-	IRnodeInList *pStore, *pRet;
+	IRnodeInList *pStore, *pRet; // IR : "STOREI"/"STOREF", "RET"
 	string tmp;
 	IR_node ir;
 };
@@ -178,7 +179,7 @@ public:
 	
 	string id, tmp; //tmp used only when storing var to var
 	exp_node *exp;
-	IRnodeInList* pAssign;
+	IRnodeInList* pAssign; // IR : "STOREI"/"STOREF"
 	IR_node ir;
 };
 
@@ -193,7 +194,7 @@ public:
 	
 	string id, type;
 	IR_node ir;
-	IRnodeInList* pRead;
+	IRnodeInList* pRead; // IR: "READI"/"READF"
 };
 
 class write_stmt: public statement 
@@ -207,7 +208,7 @@ public:
 	
 	string id, type;
 	IR_node ir;
-	IRnodeInList* pWrite;
+	IRnodeInList* pWrite; // IR: "WRITEI"/"WRITEF"/"WRITES"
 };
 
 class brk_stmt: public statement //"BREAK"
@@ -216,7 +217,7 @@ public:
 	virtual void printIR(); 
 	virtual void printTiny();
 	virtual ~brk_stmt();
-	IRnodeInList* p;
+	IRnodeInList* pJump; // IR: "JUMP"
 };
 
 class con_stmt: public statement //"CONTINUE"
@@ -225,7 +226,7 @@ public:
 	virtual void printIR(); 
 	virtual void printTiny();
     virtual ~con_stmt();
-	IRnodeInList* p;
+	IRnodeInList* pJump; // IR: "JUMP"
 };
 
 class else_stmt: public statement 
@@ -239,7 +240,7 @@ public:
 		
 	cond_node *cond;
 	list<statement*> *stmts;
-	IRnodeInList *p, *p1; //p -> "JUMP", p1 -> "LABEL"
+	IRnodeInList *pJump, *pLabel; // IR: "JUMP", "LABEL"
 	string outlabel, nextlabel;
 };
 
@@ -254,7 +255,7 @@ public:
 	virtual ~if_stmt();	
 	
 	cond_node *cond;
-	IRnodeInList *p, *p1, *p2; // p -> "JUMP", p1/p2 -> "LABEL"
+	IRnodeInList *pJump, *pLabel1, *pLabel2; // IR: "JUMP", "LABEL", "LABEL"
 	string outlabel, nextlabel;
 	list<statement*> *stmts, *else_stmts; 
 };
@@ -270,7 +271,7 @@ public:
 	
 	cond_node *cond;
 	list<statement*> *stmts;
-	IRnodeInList *p, *p1, *p2, *p3; // p/p1/p3 -> "LABEL", p2 -> "JUMP"
+	IRnodeInList *pLabel1, *pLabel2, *pJump, *pLabel3; // IR: "LABEL", "LABEL", "JUMP", "LABEL"
 	string looplabel, outlabel;
 };
 
@@ -286,11 +287,11 @@ public:
 	virtual void printTiny();
 	virtual ~func_dec();
 
-	int tmpCount;	
+	int tmpCount; //temp variable count	
 	vector<IRnodeInList*> *IRnodeList;
 	Symtable *pglobal, *psym;
 	list<statement*> *stmts;
-	IRnodeInList *p1, *p2, *p3; // p1 -> "LABEL", p2 -> "LINK", p3 -> "RET"
+	IRnodeInList *pLabel, *pLink, *pRet; // IR: "LABEL", "LINK", "RET"
 };
 
 class pgm // main program class

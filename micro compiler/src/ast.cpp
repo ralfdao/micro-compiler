@@ -344,9 +344,9 @@ void fun_call_node::getSymtable()
 
 void fun_call_node::printIR() 
 { 
-	p0 = new IRnodeInList;	
-	p0->node.opcode = "PUSH";		
-	IRnodeList->push_back(p0);
+	pPush = new IRnodeInList;	
+	pPush->node.opcode = "PUSH";		
+	IRnodeList->push_back(pPush);
 	
 	list<exp_node*>::iterator iter = explist->exp_nodes->begin();
 	list<string>::iterator iter_tmp = tmplist.begin();
@@ -362,19 +362,19 @@ void fun_call_node::printIR()
 		pushList.push_back(p);
 	}
 		
-	p1 = new IRnodeInList;	
-	p1->node.opcode = "JSR";		
-	p1->node.op1 = name;
+	pJsr = new IRnodeInList;	
+	pJsr->node.opcode = "JSR";		
+	pJsr->node.op1 = name;
 	
 	vector<string>::iterator iter1 = pglobal->syms_local.begin();  
 	for(; iter1 != pglobal->syms_local.end(); ++iter1)
 	{	
 		Information* pi = pglobal->findInfo(*iter1);
 		if(pi && pi->type != "STRING")
-			p1->node.gen_vec.push_back(pglobal->getIRname(pi->name));
+			pJsr->node.gen_vec.push_back(pglobal->getIRname(pi->name));
 	}
 	
-	IRnodeList->push_back(p1);
+	IRnodeList->push_back(pJsr);
 	
 	int size = explist->exp_nodes->size();
 	for(int i = 0; i < size; i++)
@@ -385,11 +385,11 @@ void fun_call_node::printIR()
 		popList.push_back(p);			
 	}
 	
-	finalpop = new IRnodeInList;	
-	finalpop->node.opcode = "POP";		
-	finalpop->node.op3 = ir.op3;
-	finalpop->node.kill_vec.push_back(ir.op3);
-	IRnodeList->push_back(finalpop);
+	pPop = new IRnodeInList;	
+	pPop->node.opcode = "POP";		
+	pPop->node.op3 = ir.op3;
+	pPop->node.kill_vec.push_back(ir.op3);
+	IRnodeList->push_back(pPop);
 }
 
 string fun_call_node::genIR() 
@@ -410,8 +410,8 @@ string fun_call_node::genIR()
 
 void fun_call_node::printTiny() 
 {
-	if(p0->isleader())
-		reg.reset(p0, pfunc, IRnodeList);
+	if(pPush->isleader())
+		reg.reset(pPush, pfunc, IRnodeList);
 	cout << "push" << endl;
 	
 	list<exp_node*>::iterator iter = explist->exp_nodes->begin();
@@ -452,8 +452,8 @@ void fun_call_node::printTiny()
 		}
 	}
 	
-	if(p1->isleader())
-		reg.reset(p1, pfunc, IRnodeList);
+	if(pJsr->isleader())
+		reg.reset(pJsr, pfunc, IRnodeList);
 	cout << "push r0" << endl;
 	cout << "push r1" << endl;
 	cout << "push r2" << endl;
@@ -472,9 +472,9 @@ void fun_call_node::printTiny()
 		cout << "pop" << endl;
 	}
 	
-	if(finalpop->isleader())
-		reg.reset(finalpop, pfunc, IRnodeList);
-	string s1 = reg.allocate(ir.op3, finalpop, pfunc); 
+	if(pPop->isleader())
+		reg.reset(pPop, pfunc, IRnodeList);
+	string s1 = reg.allocate(ir.op3, pPop, pfunc); 
 	reg.markDirty(s1);
 	cout << "pop " << s1 << endl;
 }
@@ -901,7 +901,7 @@ void read_stmt::printIR()
 void read_stmt::genIR() 
 {
 	if(type == "INT")
-		ir.opcode = "RAEDI";
+		ir.opcode = "READI";
 	else if(type == "FLOAT")
 		ir.opcode = "READF";
 		
@@ -955,34 +955,34 @@ write_stmt::~write_stmt() {}
 
 void brk_stmt::printTiny() 
 {
-	if(p->isleader())
-		reg.reset(p, pfunc, IRnodeList);
+	if(pJump->isleader())
+		reg.reset(pJump, pfunc, IRnodeList);
 	cout << "jmp " << loopoutlabel << endl;	
 }
 
 void brk_stmt::printIR() 
 {
-	p = new IRnodeInList;
-	p->node.opcode = "JUMP";
-	p->node.op1 = loopoutlabel;
-	IRnodeList->push_back(p);
+	pJump = new IRnodeInList;
+	pJump->node.opcode = "JUMP";
+	pJump->node.op1 = loopoutlabel;
+	IRnodeList->push_back(pJump);
 }
 
 brk_stmt::~brk_stmt() {}
 
 void con_stmt::printTiny() 
 {
-	if(p->isleader())
-		reg.reset(p, pfunc, IRnodeList);
+	if(pJump->isleader())
+		reg.reset(pJump, pfunc, IRnodeList);
 	cout << "jmp " << label_before_cond << endl;	
 }
 
 void con_stmt::printIR() 
 {
-	p = new IRnodeInList;
-	p->node.opcode = "JUMP";
-	p->node.op1 = label_before_cond;
-	IRnodeList->push_back(p);
+	pJump = new IRnodeInList;
+	pJump->node.opcode = "JUMP";
+	pJump->node.op1 = label_before_cond;
+	IRnodeList->push_back(pJump);
 }
 
 con_stmt::~con_stmt() {}
@@ -1013,15 +1013,15 @@ void else_stmt::printIR()
 	for(stmtIter = stmts->begin(); stmtIter != stmts->end(); stmtIter++) 
 		(*stmtIter)->printIR();
 
-	p = new IRnodeInList;	
-	p->node.opcode = "JUMP";	
-	p->node.op1 = outlabel;		
-	IRnodeList->push_back(p);
+	pJump = new IRnodeInList;	
+	pJump->node.opcode = "JUMP";	
+	pJump->node.op1 = outlabel;		
+	IRnodeList->push_back(pJump);
 	
-	p1 = new IRnodeInList;	
-	p1->node.opcode = "LABEL";	
-	p1->node.op1 = nextlabel;		
-	IRnodeList->push_back(p1);
+	pLabel = new IRnodeInList;	
+	pLabel->node.opcode = "LABEL";	
+	pLabel->node.op1 = nextlabel;		
+	IRnodeList->push_back(pLabel);
 }
 
 void else_stmt::printTiny() 
@@ -1031,12 +1031,12 @@ void else_stmt::printTiny()
 	for(stmtIter = stmts->begin(); stmtIter != stmts->end(); stmtIter++) 
 		(*stmtIter)->printTiny();
 		
-	if(p->isleader())
-		reg.reset(p, pfunc, IRnodeList);
+	if(pJump->isleader())
+		reg.reset(pJump, pfunc, IRnodeList);
 	cout << "jmp " << outlabel << endl;
 	
-	if(p1->isleader())
-		reg.reset(p1, pfunc, IRnodeList);
+	if(pLabel->isleader())
+		reg.reset(pLabel, pfunc, IRnodeList);
 	cout << "label " << nextlabel << endl;
 }
 
@@ -1056,23 +1056,23 @@ void if_stmt::printIR()
 	for(stmtIter = stmts->begin(); stmtIter != stmts->end(); stmtIter++) 
 		(*stmtIter)->printIR();
 
-	p = new IRnodeInList;	
-	p->node.opcode = "JUMP";
-	p->node.op1 = outlabel;		
-	IRnodeList->push_back(p);
+	pJump = new IRnodeInList;	
+	pJump->node.opcode = "JUMP";
+	pJump->node.op1 = outlabel;		
+	IRnodeList->push_back(pJump);
 
-	p1 = new IRnodeInList;	
-	p1->node.opcode = "LABEL";
-	p1->node.op1 = nextlabel;		
-	IRnodeList->push_back(p1);
+	pLabel1 = new IRnodeInList;	
+	pLabel1->node.opcode = "LABEL";
+	pLabel1->node.op1 = nextlabel;		
+	IRnodeList->push_back(pLabel1);
 	
 	for(stmtIter = else_stmts->begin(); stmtIter != else_stmts->end(); stmtIter++)
 		(*stmtIter)->printIR();
 		
-	p2 = new IRnodeInList;	
-	p2->node.opcode = "LABEL";
-	p2->node.op1 = outlabel;		
-	IRnodeList->push_back(p2);
+	pLabel2 = new IRnodeInList;	
+	pLabel2->node.opcode = "LABEL";
+	pLabel2->node.op1 = outlabel;		
+	IRnodeList->push_back(pLabel2);
 }
 
 void if_stmt::printTiny() 
@@ -1082,19 +1082,19 @@ void if_stmt::printTiny()
 	for(stmtIter = stmts->begin(); stmtIter != stmts->end(); stmtIter++) 
 		(*stmtIter)->printTiny();
 	
-	if(p->isleader())
-		reg.reset(p, pfunc, IRnodeList);
+	if(pJump->isleader())
+		reg.reset(pJump, pfunc, IRnodeList);
 	cout << "jmp " << outlabel << endl;
 	
-	if(p1->isleader())
-		reg.reset(p1, pfunc, IRnodeList);		
+	if(pLabel1->isleader())
+		reg.reset(pLabel1, pfunc, IRnodeList);		
 	cout << "label " << nextlabel << endl;
 	
 	for(stmtIter = else_stmts->begin(); stmtIter != else_stmts->end(); stmtIter++)
 		(*stmtIter)->printTiny();
 	
-	if(p2->isleader())
-		reg.reset(p2, pfunc, IRnodeList);	
+	if(pLabel2->isleader())
+		reg.reset(pLabel2, pfunc, IRnodeList);	
 	cout << "label " << outlabel << endl;
 }
 
@@ -1146,55 +1146,55 @@ if_stmt::~if_stmt()
 
 void dowhile_stmt::printIR() 
 {
-	p = new IRnodeInList;	
-	p->node.opcode = "LABEL";
-	p->node.op1 = looplabel;		
-	IRnodeList->push_back(p);
+	pLabel1 = new IRnodeInList;	
+	pLabel1->node.opcode = "LABEL";
+	pLabel1->node.op1 = looplabel;		
+	IRnodeList->push_back(pLabel1);
 	
 	list<statement*>::iterator stmtIter;
 	for(stmtIter = stmts->begin(); stmtIter != stmts->end(); stmtIter++) 
 		(*stmtIter)->printIR();
 		
-	p1 = new IRnodeInList;	
-	p1->node.opcode = "LABEL";
-	p1->node.op1 = label_before_cond;		
-	IRnodeList->push_back(p1);
+	pLabel2 = new IRnodeInList;	
+	pLabel2->node.opcode = "LABEL";
+	pLabel2->node.op1 = label_before_cond;		
+	IRnodeList->push_back(pLabel2);
 	
 	cond->printIR();
 	
-	p2 = new IRnodeInList;	
-	p2->node.opcode = "JUMP";
-	p2->node.op1 = looplabel;		
-	IRnodeList->push_back(p2);
+	pJump = new IRnodeInList;	
+	pJump->node.opcode = "JUMP";
+	pJump->node.op1 = looplabel;		
+	IRnodeList->push_back(pJump);
 	
-	p3 = new IRnodeInList;	
-	p3->node.opcode = "LABEL";
-	p3->node.op1 = outlabel;		
-	IRnodeList->push_back(p3);
+	pLabel3 = new IRnodeInList;	
+	pLabel3->node.opcode = "LABEL";
+	pLabel3->node.op1 = outlabel;		
+	IRnodeList->push_back(pLabel3);
 }
 
 void dowhile_stmt::printTiny() 
 { 
-	if(p->isleader())
-		reg.reset(p, pfunc, IRnodeList);
+	if(pLabel1->isleader())
+		reg.reset(pLabel1, pfunc, IRnodeList);
 	cout << "label " << looplabel << endl;
 	
 	list<statement*>::iterator stmtIter;
 	for(stmtIter = stmts->begin(); stmtIter != stmts->end(); stmtIter++) 
 		(*stmtIter)->printTiny();
 	
-	if(p1->isleader())
-		reg.reset(p1, pfunc, IRnodeList);
+	if(pLabel2->isleader())
+		reg.reset(pLabel2, pfunc, IRnodeList);
 	cout << "label " << label_before_cond << endl;
 	
 	cond->printTiny();
 	
-	if(p2->isleader())
-		reg.reset(p2, pfunc, IRnodeList);
+	if(pJump->isleader())
+		reg.reset(pJump, pfunc, IRnodeList);
 	cout << "jmp " << looplabel << endl;
 	
-	if(p3->isleader())
-		reg.reset(p3, pfunc, IRnodeList);
+	if(pLabel3->isleader())
+		reg.reset(pLabel3, pfunc, IRnodeList);
 	cout << "label " << outlabel << endl;
 }
 
@@ -1234,14 +1234,14 @@ dowhile_stmt::~dowhile_stmt()
 
 void func_dec::printIR() 
 { 
-	p1 = new IRnodeInList;	
-	p1->node.opcode = "LABEL";
-	p1->node.op1 = psym->scope;		
-	IRnodeList->push_back(p1);
+	pLabel = new IRnodeInList;	
+	pLabel->node.opcode = "LABEL";
+	pLabel->node.op1 = psym->scope;		
+	IRnodeList->push_back(pLabel);
 	
-	p2 = new IRnodeInList;	
-	p2->node.opcode = "LINK";		
-	IRnodeList->push_back(p2);
+	pLink = new IRnodeInList;	
+	pLink->node.opcode = "LINK";		
+	IRnodeList->push_back(pLink);
 	
 	list<statement*>::iterator stmtIter;
 	for(stmtIter = stmts->begin(); stmtIter != stmts->end(); stmtIter++) 
@@ -1252,21 +1252,21 @@ void func_dec::printIR()
 		return_stmt* rsp = dynamic_cast<return_stmt*>(last);
 		if(rsp == 0)
 		{
-			p3 = new IRnodeInList;	
-			p3->node.opcode = "RET";		
-			IRnodeList->push_back(p3);
+			pRet = new IRnodeInList;	
+			pRet->node.opcode = "RET";		
+			IRnodeList->push_back(pRet);
 		}
 	}
 }
 	
 void func_dec::printTiny() 
 { 
-	if(p1->isleader())
-		reg.reset(p1, psym, IRnodeList);
+	if(pLabel->isleader())
+		reg.reset(pLabel, psym, IRnodeList);
 	cout << "label " << psym->scope << endl;
 	
-	if(p2->isleader())
-		reg.reset(p2, psym, IRnodeList);
+	if(pLink->isleader())
+		reg.reset(pLink, psym, IRnodeList);
 	int n = psym->syms_local.size();
 	cout << "link " << n+tmpCount << endl;
 	
@@ -1280,8 +1280,8 @@ void func_dec::printTiny()
 		return_stmt* rsp = dynamic_cast<return_stmt*>(last);
 		if(rsp == 0)
 		{
-			if(p3->isleader())
-				reg.reset(p3, psym, IRnodeList);
+			if(pRet->isleader())
+				reg.reset(pRet, psym, IRnodeList);
 			cout << "unlnk" << endl << "ret" << endl;
 		}
 	}
