@@ -2,7 +2,7 @@ This is Yu Liu's compiler project (written in C++, used flex & bison)
 
 To compile the project, open a terminal, cd to the directory where "Makefile" locates. 
 
-use "make" command to generate the "Micro" compiler, which locates at directory "./build."
+use "make" command to generate the "Micro" compiler, which locates at newly generated directory "./build."
 
 You can also use "make clean" command to clean the generated files.
 
@@ -15,7 +15,7 @@ make "./testcases" the current directory.
 use command "Micro factorial.micro > fact.out" to compile file "factorial.micro" into "fact.out" 
 which contains tiny codes (you can open the file to see) that run on the simulator "tiny4R"
 
-To try it out, use command "tiny4R fact.out." An example is given below:
+To try it out, use command "tiny4R fact.out"   An example is given below:
 
 Please enter an integer number: 6
 720
