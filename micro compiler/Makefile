@@ -37,4 +37,4 @@ $(bld):
 	mkdir $(bld)
 	
 clean:
-	rm -f $(bld)/*.o $(gen)/*.c $(gen)/*.h -rf $(bld) $(gen)
+	rm -rf $(bld) $(gen)
